@@ -1,0 +1,59 @@
+---
+- name: Add apt key
+  apt_key:
+    keyserver: pool.sks-keyservers.net
+    id: ED75B5A4483DA07C
+
+- name: Add apt repository
+  apt_repository:
+    repo: deb http://repo.aptly.info/ squeeze main
+    update_cache: true
+
+- name: Install required packages
+  apt:
+    name: "{{ item }}"
+  with_items:
+    - aptly
+    - gnupg1
+    - gpgv1
+
+- name: Write configuration file
+  copy:
+    content: "{{ aptly_configuration | combine({ 'rootDir': aptly_root_dir }) | to_nice_json }}"
+    dest: /etc/aptly.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Create gnupg home directory
+  file:
+    path: "{{ aptly_gnupg_home }}"
+    state: directory
+    owner: "{{ aptly_user }}"
+    group: "{{ aptly_group }}"
+    mode: 0700
+
+- name: Stat gnupg keys
+  command:
+    sudo -u {{ aptly_user }} GNUPGHOME={{ aptly_gnupg_home }} gpg1 --list-secret-keys
+  register: out
+  changed_when: false
+
+- name: Generate gnupg key
+  shell: |
+    echo '
+      %no-protection
+      Key-Type: 1
+      Key-Length: {{ aptly_gnupg_key_length }}
+      Subkey-Type: 1
+      Subkey-Length: {{ aptly_gnupg_key_length }}
+      Name-Real: {{ aptly_gnupg_name }}
+      Name-Email: {{ aptly_gnupg_email }}
+      Expire-Date: 0
+    ' | sudo -u {{ aptly_user }} GNUPGHOME={{ aptly_gnupg_home }} gpg1 --gen-key --batch
+  when: "'uid' not in out.stdout"
+
+- name: Export gnupg key
+  shell:
+    cmd: sudo -u {{ aptly_user }} GNUPGHOME={{ aptly_gnupg_home }} gpg1 --armor --export "{{ aptly_gnupg_email }}" > {{ aptly_gnupg_pkey_location }}
+    creates: "{{ aptly_gnupg_pkey_location }}"

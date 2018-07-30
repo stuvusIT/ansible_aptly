@@ -1,0 +1,10 @@
+---
+aptly_root_dir: /var/lib/aptly
+aptly_gnupg_home: /var/lib/aptly/.gnupg
+aptly_gnupg_pkey_location: /var/lib/aptly/aptly.asc
+aptly_gnupg_key_length: 4096
+aptly_gnupg_name: Aptly
+aptly_gnupg_email: aptly@example.com
+aptly_configuration: {}
+aptly_user: root
+aptly_group: root
