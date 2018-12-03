@@ -11,11 +11,10 @@
 
 - name: Install required packages
   apt:
-    name: "{{ item }}"
-  with_items:
-    - aptly
-    - gnupg1
-    - gpgv1
+    name:
+      - aptly
+      - gnupg1
+      - gpgv1
 
 - name: Write configuration file
   copy:
